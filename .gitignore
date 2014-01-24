@@ -21,3 +21,5 @@ DerivedData
 Pods
 
 /BugshotKit.xcodeproj/project.xcworkspace/
+
+/build/
