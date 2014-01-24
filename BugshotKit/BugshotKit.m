@@ -243,40 +243,40 @@ UIImage *BSKImageWithDrawing(CGSize size, void (^drawingCommands)())
             if (invocationGestures & BSKInvocationGestureSwipeDown) NSLog(@"[BugshotKit] Enabled for %d-finger swipe down.", (int) fingerCount);
         }
 
-        if (invocationGestures & BSKInvocationGestureSwipeFromRightEdge) {
-            // Similar deal with these (see swipe recognizers above), but screen-edge gesture recognizers always return 0 upon reading the .edges property.
-            // I guess it's write-only. So we actually need four different action methods to know which one was invoked.
-            
-            UIScreenEdgePanGestureRecognizer *egr = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(topEdgePanGesture:)];
-            egr.edges = UIRectEdgeTop;
-            egr.minimumNumberOfTouches = fingerCount;
-            egr.maximumNumberOfTouches = fingerCount;
-            egr.delegate = self;
-            [self.window addGestureRecognizer:egr];
-
-            egr = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(bottomEdgePanGesture:)];
-            egr.edges = UIRectEdgeBottom;
-            egr.minimumNumberOfTouches = fingerCount;
-            egr.maximumNumberOfTouches = fingerCount;
-            egr.delegate = self;
-            [self.window addGestureRecognizer:egr];
-
-            egr = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(leftEdgePanGesture:)];
-            egr.edges = UIRectEdgeLeft;
-            egr.minimumNumberOfTouches = fingerCount;
-            egr.maximumNumberOfTouches = fingerCount;
-            egr.delegate = self;
-            [self.window addGestureRecognizer:egr];
-
-            egr = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(rightEdgePanGesture:)];
-            egr.edges = UIRectEdgeRight;
-            egr.minimumNumberOfTouches = fingerCount;
-            egr.maximumNumberOfTouches = fingerCount;
-            egr.delegate = self;
-            [self.window addGestureRecognizer:egr];
-
-            NSLog(@"[BugshotKit] Enabled for swipe from right edge.");
-        }
+//        if (invocationGestures & BSKInvocationGestureSwipeFromRightEdge) {
+//            // Similar deal with these (see swipe recognizers above), but screen-edge gesture recognizers always return 0 upon reading the .edges property.
+//            // I guess it's write-only. So we actually need four different action methods to know which one was invoked.
+//            
+//            UIScreenEdgePanGestureRecognizer *egr = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(topEdgePanGesture:)];
+//            egr.edges = UIRectEdgeTop;
+//            egr.minimumNumberOfTouches = fingerCount;
+//            egr.maximumNumberOfTouches = fingerCount;
+//            egr.delegate = self;
+//            [self.window addGestureRecognizer:egr];
+//
+//            egr = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(bottomEdgePanGesture:)];
+//            egr.edges = UIRectEdgeBottom;
+//            egr.minimumNumberOfTouches = fingerCount;
+//            egr.maximumNumberOfTouches = fingerCount;
+//            egr.delegate = self;
+//            [self.window addGestureRecognizer:egr];
+//
+//            egr = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(leftEdgePanGesture:)];
+//            egr.edges = UIRectEdgeLeft;
+//            egr.minimumNumberOfTouches = fingerCount;
+//            egr.maximumNumberOfTouches = fingerCount;
+//            egr.delegate = self;
+//            [self.window addGestureRecognizer:egr];
+//
+//            egr = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(rightEdgePanGesture:)];
+//            egr.edges = UIRectEdgeRight;
+//            egr.minimumNumberOfTouches = fingerCount;
+//            egr.maximumNumberOfTouches = fingerCount;
+//            egr.delegate = self;
+//            [self.window addGestureRecognizer:egr];
+//
+//            NSLog(@"[BugshotKit] Enabled for swipe from right edge.");
+//        }
 
         if (invocationGestures & BSKInvocationGestureDoubleTap) {
             UITapGestureRecognizer *tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleOpenGesture:)];
