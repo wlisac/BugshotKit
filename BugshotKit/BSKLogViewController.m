@@ -6,7 +6,8 @@
 #import "BugshotKit.h"
 
 @interface BSKLogViewController ()
-@property (nonatomic) UITextView *textView;
+@property (nonatomic) UIImageView *consoleView;
+@property (nonatomic) UITextView *consoleTextView;
 @end
 
 static int markerNumber = 0;
@@ -18,6 +19,7 @@ static int markerNumber = 0;
     if ( (self = [super init]) ) {
         self.title = @"Debug Log";
         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addMarkerButtonTapped:)];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateLiveLog:) name:BSKNewLogMessageNotification object:nil];
     }
     return self;
 }
@@ -31,8 +33,12 @@ static int markerNumber = 0;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    [self updateText:nil];
-    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateText:) name:BSKNewLogMessageNotification object:nil];
+
+    UIView *console = ([BugshotKit.sharedManager displayConsoleTextInLogViewer] ? self.consoleTextView : self.consoleView);
+    [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|[c]|" options:0 metrics:nil views:@{ @"c" : console }]];
+    [self.view addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[top][c]|" options:0 metrics:nil views:@{ @"c" : console, @"top" : self.topLayoutGuide }]];
+
+    dispatch_async(dispatch_get_main_queue(), ^{ [self updateLiveLog:nil]; });
 }
 
 - (void)dealloc
@@ -47,24 +53,41 @@ static int markerNumber = 0;
     UIView *view = [[UIView alloc] initWithFrame:frame];
     view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     view.autoresizesSubviews = YES;
-    
-    self.textView = [[UITextView alloc] initWithFrame:frame];
-    self.textView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.textView.font = [BugshotKit consoleFontWithSize:(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad ? 13.0f : 9.0f)];
-    self.textView.editable = NO;
-    [view addSubview:self.textView];
-    
+
+    if ([BugshotKit.sharedManager displayConsoleTextInLogViewer]) {
+        self.automaticallyAdjustsScrollViewInsets = NO;
+        self.consoleTextView = [[UITextView alloc] initWithFrame:frame];
+        self.consoleTextView.translatesAutoresizingMaskIntoConstraints = NO;
+        self.consoleTextView.editable = NO;
+        self.consoleTextView.font = [BugshotKit consoleFontWithSize:(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad ? 13.0f : 9.0f)];
+        [view addSubview:self.consoleTextView];
+    }
+    else {
+        self.consoleView = [[UIImageView alloc] initWithFrame:frame];
+        self.consoleView.translatesAutoresizingMaskIntoConstraints = NO;
+        [view addSubview:self.consoleView];
+    }
+
     self.view = view;
 }
 
-- (void)updateText:(NSNotification *)n
+- (void)updateLiveLog:(NSNotification *)n
 {
-    NSMutableString *text = [[BugshotKit.sharedManager currentConsoleLogWithDateStamps:NO] mutableCopy];
-    [text appendString:@"\n\n"];
-    self.textView.text = text;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.textView scrollRangeToVisible:NSMakeRange(self.textView.text.length - 1, 1)];
-    });
+    if (! self.isViewLoaded) return;
+
+    if ([BugshotKit.sharedManager displayConsoleTextInLogViewer]) {
+        [BugshotKit.sharedManager currentConsoleLogWithDateStamps:YES
+                                                   withCompletion:^(NSString *result) {
+                                                       self.consoleTextView.text = result;
+                                                       [self.consoleTextView scrollRangeToVisible:NSMakeRange([result length], 0)];
+                                                   }];
+    }
+    else {
+        [BugshotKit.sharedManager consoleImageWithSize:self.consoleView.bounds.size fontSize:(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad ? 13.0f : 9.0f) emptyBottomLine:YES withCompletion:^(UIImage *image) {
+            self.consoleView.image = image;
+        }];
+    }
 }
+
 
 @end

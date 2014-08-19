@@ -272,8 +272,19 @@ static UIImage *rotateIfNeeded(UIImage *src);
 
 - (void)sendButtonTapped:(id)sender
 {
+    if (self.includeLogToggle.on) {
+        [BugshotKit.sharedManager currentConsoleLogWithDateStamps:YES withCompletion:^(NSString *result) {
+            [self sendButtonTappedWithLog:result];
+        }];
+    }
+    else {
+        [self sendButtonTappedWithLog:nil];
+    }
+}
+
+- (void)sendButtonTappedWithLog:(NSString *)log
+{
     UIImage *screenshot = self.includeScreenshotToggle.on ? (BugshotKit.sharedManager.annotatedImage ?: BugshotKit.sharedManager.snapshotImage) : nil;
-    NSString *log = self.includeLogToggle.on ? [BugshotKit.sharedManager currentConsoleLogWithDateStamps:YES] : nil;
     if (log && ! log.length) log = nil;
     
     NSString *appNameString = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
@@ -315,7 +326,8 @@ static UIImage *rotateIfNeeded(UIImage *src);
     if (screenshot) [mf addAttachmentData:UIImagePNGRepresentation(rotateIfNeeded(screenshot)) mimeType:@"image/png" fileName:@"screenshot.png"];
     if (log) [mf addAttachmentData:[log dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"log.txt"];
     if (userInfoJSON) [mf addAttachmentData:userInfoJSON mimeType:@"application/json" fileName:@"info.json"];
-
+    if(BugshotKit.sharedManager.mailComposeCustomizeBlock) BugshotKit.sharedManager.mailComposeCustomizeBlock(mf);
+    
     mf.mailComposeDelegate = self;
     [self presentViewController:mf animated:YES completion:NULL];
 }
@@ -351,48 +363,12 @@ static UIImage *rotateIfNeeded(UIImage *src);
 
 #pragma mark - Live console image
 
-#define kMaxCharactersToDraw 1000
 - (void)updateLiveLog:(NSNotification *)n
 {
     if (! self.isViewLoaded) return;
-    
-    NSString *consoleText = [BugshotKit.sharedManager currentConsoleLogWithDateStamps:NO];
-    if (consoleText.length > kMaxCharactersToDraw) consoleText = [consoleText substringFromIndex:(consoleText.length - kMaxCharactersToDraw)];
-
-    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
-    paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
-    paragraphStyle.alignment = NSTextAlignmentLeft;
-
-    NSDictionary *attributes = @{
-        NSFontAttributeName : [BugshotKit consoleFontWithSize:7],
-        NSForegroundColorAttributeName : UIColor.blackColor,
-        NSParagraphStyleAttributeName : paragraphStyle,
-    };
-    
-    NSMutableAttributedString *attrString = [[NSMutableAttributedString alloc] initWithString:consoleText attributes:attributes];
-
-    NSStringDrawingContext *stringDrawingContext = [NSStringDrawingContext new];
-    stringDrawingContext.minimumScaleFactor = 1.0;
-
-    NSStringDrawingOptions options = (NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingTruncatesLastVisibleLine | NSStringDrawingUsesFontLeading);
-    
-    CGSize size = self.consoleView.bounds.size;
-    CGFloat padding = 2.0f;
-    CGSize renderSize = CGSizeMake(size.width - padding * 2.0f, size.height - padding * 2.0f);
-    UIImage *textImage = BSKImageWithDrawing(self.consoleView.bounds.size, ^{
-        [UIColor.whiteColor setFill];
-        [[UIBezierPath bezierPathWithRect:CGRectMake(0, 0, size.width, size.height)] fill];
-        
-        CGRect stringRect = [attrString boundingRectWithSize:CGSizeMake(renderSize.width, MAXFLOAT) options:options context:stringDrawingContext];
-        
-        stringRect.origin = CGPointMake(padding, padding);
-        if (stringRect.size.height < renderSize.height) stringRect.size.height = renderSize.height;
-        else stringRect.origin.y -= (stringRect.size.height - renderSize.height);
-
-        [attrString drawWithRect:stringRect options:options context:stringDrawingContext];
-    });
-
-    [self.consoleView setBackgroundImage:textImage forState:UIControlStateNormal];
+    [BugshotKit.sharedManager consoleImageWithSize:self.consoleView.bounds.size fontSize:7 emptyBottomLine:NO withCompletion:^(UIImage *image) {
+        [self.consoleView setBackgroundImage:image forState:UIControlStateNormal];
+    }];
 }
 
 @end

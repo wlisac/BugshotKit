@@ -34,6 +34,7 @@ typedef enum : NSUInteger {
 
 /* You can also always show it manually */
 + (void)show;
++ (void)dismissAninmated:(BOOL)animated completion:(void(^)())completion;
 
 + (instancetype)sharedManager;
 - (void)clearLog;
@@ -73,11 +74,31 @@ typedef enum : NSUInteger {
  */
 + (void)setEmailBodyBlock:(NSString *(^)(NSDictionary *))emailBodyBlock;
 
+/*
+ You can optionally customize the mail compose view controller by setting an mailComposeCustomizeBlock.
+ 
+ Use this block e.g. for adding file attachments to the e-mail being sent.
+ */
++ (void)setMailComposeCustomizeBlock:(void (^)(MFMailComposeViewController *mailComposer))mailComposeCustomizeBlock;
+
+/*
+ You can display the console log viewer as selectable text. Defaults to NO which presents a screenshot of the log text.
+
+ @param displayText YES if the console log should be displayed as selectable text. NO if it should use a screenshot.
+ */
++ (void)setDisplayConsoleTextInLogViewer:(BOOL)displayText;
 
 // feel free to mess with these if you want
 
-- (NSString *)currentConsoleLogWithDateStamps:(BOOL)dateStamps;
+- (void)currentConsoleLogWithDateStamps:(BOOL)dateStamps
+                         withCompletion:(void (^)(NSString *result))completion;
+- (void)consoleImageWithSize:(CGSize)size
+                    fontSize:(CGFloat)fontSize
+             emptyBottomLine:(BOOL)emptyBottomLine
+              withCompletion:(void (^)(UIImage *result))completion;
 
+
+@property (nonatomic) BOOL displayConsoleTextInLogViewer;
 @property (nonatomic, strong) UIColor *annotationFillColor;
 @property (nonatomic, strong) UIColor *annotationStrokeColor;
 @property (nonatomic, strong) UIColor *toggleOnColor;
@@ -89,6 +110,7 @@ typedef enum : NSUInteger {
 @property (nonatomic, copy) NSArray *annotations;
 @property (nonatomic, strong) UIImage *annotatedImage;
 @property (nonatomic, copy) NSDictionary *(^extraInfoBlock)();
+@property (nonatomic, copy) void (^mailComposeCustomizeBlock)(MFMailComposeViewController *mailComposer);
 @property (nonatomic, copy) NSString *(^emailSubjectBlock)(NSDictionary *info);
 @property (nonatomic, copy) NSString *(^emailBodyBlock)(NSDictionary *info);
 
